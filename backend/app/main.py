@@ -11,6 +11,7 @@ from typing import Dict
 
 from app.config import settings
 from app.api.v1 import auth, vehicles, predictions, maintenance, reports
+from app.api.v1.endpoints import auth as auth_endpoints, users
 
 # 设置基础日志
 logging.basicConfig(level=logging.INFO)
@@ -67,10 +68,24 @@ app.add_middleware(
 )
 
 # 注册API路由
+# 新的认证和用户管理端点
+app.include_router(
+    auth_endpoints.router,
+    prefix="/api/v1",
+    tags=["Authentication"]
+)
+
+app.include_router(
+    users.router,
+    prefix="/api/v1",
+    tags=["Users"]
+)
+
+# 原有的模拟端点（保留以兼容）
 app.include_router(
     auth.router,
     prefix="/api/v1/auth",
-    tags=["认证授权"]
+    tags=["认证授权（模拟）"]
 )
 
 app.include_router(
@@ -138,6 +153,15 @@ async def api_info() -> Dict:
                 "登录": "POST /api/v1/auth/login",
                 "登出": "POST /api/v1/auth/logout",
                 "刷新令牌": "POST /api/v1/auth/refresh"
+            },
+            "用户管理": {
+                "用户列表": "GET /api/v1/users",
+                "当前用户": "GET /api/v1/users/me",
+                "更新当前用户": "PUT /api/v1/users/me",
+                "用户详情": "GET /api/v1/users/{id}",
+                "创建用户": "POST /api/v1/users",
+                "更新用户": "PUT /api/v1/users/{id}",
+                "删除用户": "DELETE /api/v1/users/{id}"
             },
             "车辆管理": {
                 "车辆列表": "GET /api/v1/vehicles",

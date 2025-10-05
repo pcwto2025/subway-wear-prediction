@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: subway_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-subway_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-subway_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-subway_wear_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-subway_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Optional - uncomment when needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: subway_redis
+  #   command: redis-server --appendonly yes
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: subway_backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-subway_user}:${POSTGRES_PASSWORD:-subway_pass}@postgres:5432/${POSTGRES_DB:-subway_wear_db}
+      # REDIS_URL: redis://redis:6379/0  # Uncomment when using Redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # redis:  # Uncomment when using Redis
+      #   condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: subway_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    restart: unless-stopped
+    command: npm run dev -- --host 0.0.0.0
+
+  # pgAdmin (Optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: subway_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@subway-wear.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+  backend_uploads:
+
+networks:
+  default:
+    name: subway_network
+    driver: bridge

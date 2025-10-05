@@ -80,3 +80,12 @@ export const reportApi = {
   downloadReport: (id: string) =>
     request({ url: `/reports/download/${id}`, method: 'GET' })
 }
+
+// 默认导出所有API
+export default {
+  auth: authApi,
+  vehicle: vehicleApi,
+  prediction: predictionApi,
+  maintenance: maintenanceApi,
+  report: reportApi
+}
