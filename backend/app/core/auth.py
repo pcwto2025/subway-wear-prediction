@@ -3,7 +3,7 @@ Authentication and authorization utilities
 """
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,7 +54,7 @@ async def get_current_user(
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username, user_id=user_id)
-    except JWTError:
+    except (jwt.PyJWTError, jwt.InvalidTokenError, Exception):
         raise credentials_exception
 
     user = await UserService.get_user_by_username(db, username=token_data.username)

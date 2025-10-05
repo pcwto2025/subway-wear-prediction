@@ -148,7 +148,7 @@ class SparePartResponse(SparePartBase):
 class OverhaulPlanBase(BaseModel):
     """大修计划基础模式"""
     plan_code: str = Field(..., description="大修计划编号")
-    train_number: str = Field(..., regex="^Tr(0[1-9]|1[0-6])$", description="列车编号")
+    train_number: str = Field(..., pattern="^Tr(0[1-9]|1[0-6])$", description="列车编号")
     overhaul_type: OverhaulType
     overhaul_level: OverhaulLevel
     planned_start_date: date

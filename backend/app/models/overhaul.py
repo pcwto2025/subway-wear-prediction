@@ -93,7 +93,7 @@ class OverhaulPlan(Base):
     updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     # 关系
-    vehicle = relationship("Vehicle", backref="overhaul_plans")
+    # vehicle = relationship("Vehicle", backref="overhaul_plans")  # Commented out as Vehicle model doesn't exist yet
     items = relationship("OverhaulItem", back_populates="overhaul_plan", cascade="all, delete-orphan")
     spare_parts = relationship("OverhaulSparePart", back_populates="overhaul_plan", cascade="all, delete-orphan")
     approver = relationship("User", foreign_keys=[approved_by])
@@ -235,7 +235,7 @@ class OverhaulRecord(Base):
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     # 关系
-    vehicle = relationship("Vehicle", backref="overhaul_records")
+    # vehicle = relationship("Vehicle", backref="overhaul_records")  # Commented out as Vehicle model doesn't exist yet
     plan = relationship("OverhaulPlan")
     creator = relationship("User")
 
