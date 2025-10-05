@@ -11,7 +11,7 @@ from typing import Dict
 
 from app.config import settings
 from app.api.v1 import auth, vehicles, predictions, maintenance, reports
-from app.api.v1.endpoints import auth as auth_endpoints, users
+from app.api.v1.endpoints import auth as auth_endpoints, users, overhaul
 
 # 设置基础日志
 logging.basicConfig(level=logging.INFO)
@@ -79,6 +79,12 @@ app.include_router(
     users.router,
     prefix="/api/v1",
     tags=["Users"]
+)
+
+# 大修管理端点
+app.include_router(
+    overhaul.router,
+    tags=["大修管理"]
 )
 
 # 原有的模拟端点（保留以兼容）
@@ -185,6 +191,17 @@ async def api_info() -> Dict:
                 "统计数据": "GET /api/v1/reports/statistics",
                 "车队概览": "GET /api/v1/reports/fleet-overview",
                 "生成报表": "POST /api/v1/reports/generate"
+            },
+            "大修管理": {
+                "大修计划列表": "GET /api/v1/overhaul/plans",
+                "创建大修计划": "POST /api/v1/overhaul/plans",
+                "大修计划详情": "GET /api/v1/overhaul/plans/{id}",
+                "更新大修计划": "PUT /api/v1/overhaul/plans/{id}",
+                "删除大修计划": "DELETE /api/v1/overhaul/plans/{id}",
+                "大修记录列表": "GET /api/v1/overhaul/records",
+                "创建大修记录": "POST /api/v1/overhaul/records",
+                "大修标准": "GET /api/v1/overhaul/standards",
+                "大修统计": "GET /api/v1/overhaul/statistics"
             }
         }
     }
