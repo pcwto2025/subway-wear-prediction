@@ -2,7 +2,7 @@
 Authentication API endpoints
 """
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -18,15 +18,36 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 @router.post("/login", response_model=Token)
-async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
-):
+async def login(request: Request, db: AsyncSession = Depends(get_db)):
     """
-    OAuth2 compatible token login
+    OAuth2 compatible token login - supports both JSON and form data
     """
+    content_type = request.headers.get("content-type", "")
+    
+    if "application/x-www-form-urlencoded" in content_type:
+        # 处理表单数据
+        form_data = await request.form()
+        username = form_data.get("username")
+        password = form_data.get("password")
+    elif "application/json" in content_type:
+        # 处理JSON数据
+        json_data = await request.json()
+        username = json_data.get("username")
+        password = json_data.get("password")
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported content type, use application/json or application/x-www-form-urlencoded"
+        )
+    
+    if not username or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username and password are required"
+        )
+
     user = await UserService.authenticate_user(
-        db, form_data.username, form_data.password
+        db, username, password
     )
     if not user:
         raise HTTPException(

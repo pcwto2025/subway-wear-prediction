@@ -24,14 +24,29 @@ class UserService:
         """Verify a plain password against hashed password"""
         # Truncate password to 72 bytes for bcrypt compatibility
         plain_password = plain_password[:72]
-        return pwd_context.verify(plain_password, hashed_password)
+        
+        # Handle bcrypt errors in Termux environment
+        try:
+            return pwd_context.verify(plain_password, hashed_password)
+        except Exception:
+            # If bcrypt fails, try to check if it's a simple SHA256 hash
+            import hashlib
+            simple_hash = hashlib.sha256(plain_password.encode()).hexdigest()
+            return simple_hash == hashed_password
 
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash a password"""
         # Truncate password to 72 bytes for bcrypt compatibility
         password = password[:72]
-        return pwd_context.hash(password)
+        
+        # Handle bcrypt errors in Termux environment
+        try:
+            return pwd_context.hash(password)
+        except Exception:
+            # If bcrypt fails, return a simple SHA256 hash as fallback
+            import hashlib
+            return hashlib.sha256(password.encode()).hexdigest()
 
     @staticmethod
     async def get_user(db: AsyncSession, user_id: UUID) -> Optional[User]:

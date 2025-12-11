@@ -21,14 +21,26 @@ DATABASE_ECHO = os.getenv("DATABASE_ECHO", "False").lower() == "true"
 DATABASE_POOL_SIZE = int(os.getenv("DATABASE_POOL_SIZE", "20"))
 DATABASE_MAX_OVERFLOW = int(os.getenv("DATABASE_MAX_OVERFLOW", "40"))
 
-# 创建异步数据库引擎
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=DATABASE_ECHO,
-    pool_size=DATABASE_POOL_SIZE,
-    max_overflow=DATABASE_MAX_OVERFLOW,
-    pool_pre_ping=True,
-)
+# 根据数据库类型选择合适的驱动
+if DATABASE_URL.startswith("sqlite"):
+    # 对于SQLite，使用aiosqlite作为异步驱动
+    if not DATABASE_URL.startswith("sqlite+aiosqlite"):
+        DATABASE_URL = DATABASE_URL.replace("sqlite:///", "sqlite+aiosqlite:///")
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=DATABASE_ECHO,
+        # SQLite不支持连接池参数，所以不使用这些参数
+        connect_args={"check_same_thread": False}
+    )
+else:
+    # 对于PostgreSQL等其他数据库，使用原始配置
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=DATABASE_ECHO,
+        pool_size=DATABASE_POOL_SIZE,
+        max_overflow=DATABASE_MAX_OVERFLOW,
+        pool_pre_ping=True,
+    )
 
 # 创建异步会话工厂
 AsyncSessionLocal = async_sessionmaker(

@@ -12,6 +12,7 @@ from typing import Dict
 from app.config import settings
 from app.api.v1 import auth, vehicles, predictions, maintenance, reports
 from app.api.v1.endpoints import auth as auth_endpoints, users, overhaul
+from app.api.v1 import wheelset_statistics
 
 # 设置基础日志
 logging.basicConfig(level=logging.INFO)
@@ -118,6 +119,13 @@ app.include_router(
     tags=["报表统计"]
 )
 
+# 轮对统计端点
+app.include_router(
+    wheelset_statistics.router,
+    prefix="/api/v1",
+    tags=["轮对统计"]
+)
+
 
 @app.get("/", response_class=JSONResponse)
 async def root() -> Dict[str, str]:
@@ -133,7 +141,7 @@ async def root() -> Dict[str, str]:
 
 
 @app.get("/health", response_class=JSONResponse)
-async def health_check() -> Dict[str, str]:
+async def health_check() -> Dict:
     """健康检查端点"""
     return {
         "status": "healthy",
@@ -202,6 +210,13 @@ async def api_info() -> Dict:
                 "创建大修记录": "POST /api/v1/overhaul/records",
                 "大修标准": "GET /api/v1/overhaul/standards",
                 "大修统计": "GET /api/v1/overhaul/statistics"
+            },
+            "轮对统计": {
+                "轮对统计数据列表": "GET /api/v1/wheelset-statistics",
+                "轮对统计数据详情": "GET /api/v1/wheelset-statistics/{id}",
+                "创建轮对统计数据": "POST /api/v1/wheelset-statistics",
+                "更新轮对统计数据": "PUT /api/v1/wheelset-statistics/{id}",
+                "删除轮对统计数据": "DELETE /api/v1/wheelset-statistics/{id}"
             }
         }
     }
